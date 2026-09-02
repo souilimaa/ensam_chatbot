@@ -10,6 +10,6 @@ public class Intent {
     private String personName;
     private Integer promoYear;
     private String majorNorm;
-    private List<String> metrics;;
+    private List<String> metrics;
     private Integer topK;
 }

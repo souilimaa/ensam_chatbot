@@ -1,39 +1,40 @@
 package com.ensam.chatbot.llm;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.ensam.chatbot.config.OllamaProperties;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-
-import java.util.Map;
 
 @Component
 public class OllamaClient {
 
     private final WebClient webClient;
+    private final OllamaProperties properties;
 
-    @Value("${ollama.base-url}")
-    private String baseUrl;
-
-    @Value("${ollama.model}")
-    private String model;
-
-    public OllamaClient(WebClient webClient) {
-        this.webClient = webClient;
+    public OllamaClient(WebClient ollamaWebClient, OllamaProperties properties) {
+        this.webClient = ollamaWebClient;
+        this.properties = properties;
     }
 
     public String generate(String prompt) {
-        Map<String, Object> body = Map.of(
-                "model", model,
-                "prompt", prompt,
-                "stream", false
-        );
-
-        return webClient.post()
-                .uri(baseUrl + "/api/generate")
-                .bodyValue(body)
+        OllamaResponse response = webClient.post()
+                .uri("/api/generate")
+                .bodyValue(new OllamaRequest(properties.model(), prompt, false))
                 .retrieve()
-                .bodyToMono(Map.class)
-                .map(res -> (String) res.get("response"))
-                .block();
+                .onStatus(HttpStatusCode::isError, clientResponse ->
+                        clientResponse.createException().map(OllamaException::new))
+                .bodyToMono(OllamaResponse.class)
+                .block(properties.responseTimeout());
+
+        if (response == null || response.response() == null || response.response().isBlank()) {
+            throw new OllamaException("Ollama returned an empty response");
+        }
+        return response.response();
+    }
+
+    record OllamaRequest(String model, String prompt, boolean stream) {
+    }
+
+    record OllamaResponse(String response) {
     }
 }

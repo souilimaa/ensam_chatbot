@@ -3,12 +3,9 @@ package com.ensam.chatbot.service;
 import com.ensam.chatbot.dto.ChatResponse;
 import com.ensam.chatbot.intent.Intent;
 import com.ensam.chatbot.intent.IntentType;
-import com.ensam.chatbot.llm.OllamaClient;
-import com.ensam.chatbot.llm.PromptFactory;
 import com.ensam.chatbot.repository.CompanyCount;
 import com.ensam.chatbot.repository.ProfileAnalyticsRepository;
 import com.ensam.chatbot.repository.ProfileRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,24 +16,20 @@ public class ChatService {
 
     private final ProfileRepository repo;
     private final ProfileAnalyticsRepository analyticsRepo;
-    private final OllamaClient ollama;
-    private final ObjectMapper mapper;
+    private final IntentDetectionService intentDetectionService;
 
     public ChatService(
             ProfileRepository repo,
             ProfileAnalyticsRepository analyticsRepo,
-            OllamaClient ollama,
-            ObjectMapper mapper
+            IntentDetectionService intentDetectionService
     ) {
         this.repo = repo;
         this.analyticsRepo = analyticsRepo;
-        this.ollama = ollama;
-        this.mapper = mapper;
+        this.intentDetectionService = intentDetectionService;
     }
 
     public ChatResponse ask(String question) {
-        Intent intent = detectIntent(question);
-        System.out.println(intent);
+        Intent intent = intentDetectionService.detect(question);
 
         normalizeIntent(question, intent);
 
@@ -95,7 +88,7 @@ public class ChatService {
             }
 
             case ANALYTICS_TOP -> {
-                int topK = intent.getTopK() == null ? 10 : intent.getTopK();
+                int topK = boundedTopK(intent.getTopK());
                 Integer promo = intent.getPromoYear();
                 String majorNorm = intent.getMajorNorm();
 
@@ -190,28 +183,6 @@ public class ChatService {
     }
 
 
-    private Intent detectIntent(String question) {
-        try {
-            String prompt = PromptFactory.intentPrompt(question);
-            String raw = ollama.generate(prompt);
-            System.out.println("RAW OLLAMA OUTPUT:\n" + raw);
-            String json = extractJsonObject(raw);
-            return mapper.readValue(json, Intent.class);
-        } catch (Exception e) {
-            Intent i = new Intent();
-            i.setIntent(IntentType.UNKNOWN);
-            return i;
-        }
-    }
-
-    private String extractJsonObject(String s) {
-        if (s == null) return "{}";
-        int start = s.indexOf('{');
-        int end = s.lastIndexOf('}');
-        if (start < 0 || end < 0 || end <= start) return "{}";
-        return s.substring(start, end + 1).trim();
-    }
-
     private String formatTop(List<CompanyCount> rows) {
         StringBuilder sb = new StringBuilder();
         int i = 1;
@@ -223,4 +194,7 @@ public class ChatService {
 
     private String safe(String s) { return s == null ? "" : s; }
     private boolean isBlank(String s) { return s == null || s.trim().isEmpty(); }
+    private int boundedTopK(Integer topK) {
+        return topK == null ? 10 : Math.max(1, Math.min(topK, 50));
+    }
 }

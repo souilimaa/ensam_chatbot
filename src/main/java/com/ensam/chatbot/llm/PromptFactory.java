@@ -83,13 +83,13 @@ Q: "skills of promo 2025 of big data and iot and where they passed their pfe"
 A: {"intent":"ANALYTICS_TOP","personName":null,"promoYear":2025,"majorNorm":"BIG_DATA_IOT","metrics":["SKILLS","PFE_COMPANIES"],"topK":10}
 
 Q: "Skills of promo 2025 of big data and iot"
-A: {"intent":"ANALYTICS_TOP","personName":null,"promoYear":2025,"majorNorm":"BIG_DATA_IOT","metric":"SKILLS","topK":10}
+A: {"intent":"ANALYTICS_TOP","personName":null,"promoYear":2025,"majorNorm":"BIG_DATA_IOT","metrics":["SKILLS"],"topK":10}
 
 Q: "Top PFE companies for promo 2022"
-A: {"intent":"ANALYTICS_TOP","personName":null,"promoYear":2022,"majorNorm":null,"metric":"PFE_COMPANIES","topK":10}
+A: {"intent":"ANALYTICS_TOP","personName":null,"promoYear":2022,"majorNorm":null,"metrics":["PFE_COMPANIES"],"topK":10}
 
 Q: "Where promo 2022 worked at?"
-A: {"intent":"ANALYTICS_TOP","personName":null,"promoYear":2022,"majorNorm":null,"metric":"CURRENT_EMPLOYERS","topK":10}
+A: {"intent":"ANALYTICS_TOP","personName":null,"promoYear":2022,"majorNorm":null,"metrics":["CURRENT_EMPLOYERS"],"topK":10}
 
 Question: "%s"
 """.formatted((question == null ? "" : question).replace("\"", "\\\""));

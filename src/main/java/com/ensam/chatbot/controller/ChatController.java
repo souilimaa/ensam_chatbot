@@ -3,6 +3,7 @@ package com.ensam.chatbot.controller;
 import com.ensam.chatbot.dto.ChatRequest;
 import com.ensam.chatbot.dto.ChatResponse;
 import com.ensam.chatbot.service.ChatService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,8 +17,7 @@ public class ChatController {
     }
 
     @PostMapping
-    public ChatResponse chat(@RequestBody ChatRequest req) {
-        System.out.println(req);
+    public ChatResponse chat(@Valid @RequestBody ChatRequest req) {
         return chatService.ask(req.getQuestion());
     }
 }
