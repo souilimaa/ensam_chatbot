@@ -25,13 +25,21 @@ public class IntentDetectionService {
     public Intent detect(String question) {
         try {
             String response = ollamaClient.generate(PromptFactory.intentPrompt(question));
-            return objectMapper.readValue(extractJsonObject(response), Intent.class);
+            Intent intent = objectMapper.readValue(extractJsonObject(response), Intent.class);
+            if (intent.getIntent() == null) {
+                return unknownIntent();
+            }
+            return intent;
         } catch (Exception exception) {
             log.warn("Unable to classify chatbot question: {}", exception.getMessage());
-            Intent fallback = new Intent();
-            fallback.setIntent(IntentType.UNKNOWN);
-            return fallback;
+            return unknownIntent();
         }
+    }
+
+    private Intent unknownIntent() {
+        Intent fallback = new Intent();
+        fallback.setIntent(IntentType.UNKNOWN);
+        return fallback;
     }
 
     private String extractJsonObject(String response) {
